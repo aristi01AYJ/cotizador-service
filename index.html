@@ -1828,7 +1828,8 @@ async function guardarCotizacion(){
   const garantia='';
   const obs=document.getElementById('obsInput').value.trim();
   const desc=getDescuento();
-    const descEspecial=document.getElementById('descEspecialChk').checked;
+  const descAYJpct=0; // SERVICE: descuento único sobre AYJ
+  const descEspecial=document.getElementById('descEspecialChk').checked;
   const fleteCOP=0;
   const ivaPct=19;
   if(!cliente){showToast('Ingresa el cliente','error');return;}
