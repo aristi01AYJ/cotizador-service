@@ -295,9 +295,9 @@ body.modo-cop .items-table th:nth-child(4),body.modo-cop .items-table td:nth-chi
         </div>
       </div>
       <div class="trm-bar" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <label><i class="ti ti-currency-euro" style="font-size:13px;vertical-align:-1px"></i> TRM (USD/COP)</label>
+        <label><i class="ti ti-currency-euro" style="font-size:13px;vertical-align:-1px"></i> TRM (opcional)</label>
         <input type="number" id="trmInput" value="3650" step="10" oninput="onTrmChange()">
-        <span id="trmLabel">$ 4.200 COP/USD</span>
+        <span id="trmLabel">Solo COP</span>
         <button onclick="resetTRM()" title="Tasa de Cambio EUR/COP referencia" style="background:none;border:1px solid var(--border);border-radius:var(--radius);padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text2);font-family:inherit;white-space:nowrap"><i class="ti ti-refresh" style="font-size:11px;vertical-align:-1px"></i> Ref.</button>
         <button onclick="abrirItemLibre()" style="background:#FEF3C7;border:1.5px solid #F59E0B;color:#92400E;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap"><i class="ti ti-pencil-plus"></i> Ítem libre</button>
         <button onclick="solicitarClavePrecio()" id="precioLockBtn" title="Modificar precios" style="margin-left:auto;background:#f0f4e8;border:1.5px solid var(--green);color:var(--green-dark);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">💲 Precio</button>
@@ -1208,6 +1208,9 @@ async function showApp(account){
   document.getElementById('vendedorChip').textContent=currentUserName;
   await resolverSite();
   await Promise.all([cargarMaquinas(),cargarClientes(true),cargarTRM()]);
+  // Activar modo COP por defecto en SERVICE
+  const copChk=document.getElementById('modoCOPChk');
+  if(copChk&&!copChk.checked){copChk.checked=true;toggleModoCOP(true);}
   generarNumOferta();
 }
 
@@ -1330,19 +1333,13 @@ function procesarCatalogo(){
 }
 
 async function cargarTRM(){
-  try{
-    // open.er-api.com — CORS habilitado, gratuita
-    const r=await fetch('https://open.er-api.com/v6/latest/USD');
-    const d=await r.json();
-    const rate=Math.round(d.rates?.COP||4200);
-    trm=rate;
-    document.getElementById('trmInput').value=rate;
-    document.getElementById('trmLabel').textContent='$ '+rate.toLocaleString('es-CO')+' COP/EUR · er-api';
-    calcTotales();
-  }catch(e){
-    trm=parseFloat(document.getElementById('trmInput').value)||4000;
-    document.getElementById('trmLabel').textContent='$ '+Math.round(trm).toLocaleString('es-CO')+' COP/EUR';
-  }
+  // SERVICE: todo en COP, TRM=1 por defecto
+  trm=1;
+  const inp=document.getElementById('trmInput');
+  if(inp) inp.value=1;
+  const lbl=document.getElementById('trmLabel');
+  if(lbl) lbl.textContent='Solo COP';
+  calcTotales();
 }
 
 async function resetTRM(){
