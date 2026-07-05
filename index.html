@@ -343,7 +343,8 @@ body.modo-cop .items-table th:nth-child(4),body.modo-cop .items-table td:nth-chi
           <div class="oferta-badge" id="ofertaNum">SW-2026-001</div>
           <div style="display:flex;align-items:center;gap:6px;">
             <label style="font-size:10px;color:var(--text2);white-space:nowrap">ID Synergy</label>
-            <input type="text" id="idSynergyInput" placeholder="Opcional..." maxlength="20"
+            <input type="text" id="idSynergyInput" placeholder="Obligatorio para SERVICE" maxlength="20"
+              style="border-color:#E67E22;background:#fffaf5"
               style="width:100px;padding:3px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:inherit;text-align:center"
               oninput="actualizarNumOferta()">
           </div>
@@ -358,8 +359,13 @@ body.modo-cop .items-table th:nth-child(4),body.modo-cop .items-table td:nth-chi
         </div>
         <div class="field-group" style="margin:0">
           <label style="font-size:10px">Tiempo de entrega</label>
-          <span style="font-size:11px;color:var(--text2);display:block;max-width:220px;line-height:1.3">Entrega de licencias 2 a 5 días hábiles. Instalación, capacitación e implementación según proyecto.</span>
-          <input type="hidden" id="entregaSel" value="Entrega de licencias 2 a 5 días hábiles. Instalación, capacitación e implementación según proyecto.">
+          <select id="entregaSel" onchange="onEntregaChange(this.value)" style="font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit">
+            <option value="Inmediato / Urgente">⚡ Inmediato / Urgente</option>
+            <option value="Según disponibilidad de agenda">📅 Según disponibilidad de agenda</option>
+            <option value="A convenir con el cliente" selected>🤝 A convenir con el cliente</option>
+            <option value="__custom_entrega__">✏️ Personalizar...</option>
+          </select>
+          <div id="entregaLabel" style="font-size:10px;color:var(--text2);margin-top:2px;display:none"></div>
         </div>
 
         <div class="field-group" style="margin:0;flex:1;min-width:200px">
@@ -392,35 +398,27 @@ body.modo-cop .items-table th:nth-child(4),body.modo-cop .items-table td:nth-chi
         </div>
       </div>
       <div class="footer">
-        <!-- Descuentos diferenciados -->
-        <div style="flex-shrink:0;display:flex;flex-direction:column;gap:4px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:10px;color:#5B21B6;font-weight:600;width:90px">📄 Licencias</span>
-            <input type="number" id="descInput" value="0" min="0" max="20" style="width:44px;padding:3px 5px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:inherit" oninput="validarDescuento(this)">
-            <span style="font-size:10px;color:var(--text2)" id="descMaxLabel">%</span>
-            <button onclick="solicitarClaveDesc()" id="descLockBtn" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:0;line-height:1">🔒</button>
-            <button onclick="toggleMGPanel()" id="mgBtn" style="background:#f0f4e8;border:1.5px solid var(--green);color:var(--green-dark);border-radius:20px;padding:1px 7px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">MG</button>
+        <!-- Descuento único — solo aplica a Servicios AYJ -->
+        <div style="flex-shrink:0">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:2px">Descuento Servicios AYJ (%)</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <input type="number" id="descInput" value="0" min="0" max="20" style="width:52px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit" oninput="validarDescuento(this)">
+            <span style="font-size:10px;color:var(--text2)" id="descMaxLabel">máx 20%</span>
+            <button onclick="solicitarClaveDesc()" id="descLockBtn" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:0;line-height:1">🔒</button>
+            <button onclick="toggleMGPanel()" id="mgBtn" style="background:#f0f4e8;border:1.5px solid var(--green);color:var(--green-dark);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">MG</button>
             <label style="display:flex;align-items:center;gap:3px;font-size:10px;cursor:pointer">
               <input type="checkbox" id="descEspecialChk" onchange="toggleDescEspecial(this.checked)" style="cursor:pointer">
-              <span id="descEspecialLabel" style="color:var(--text2);white-space:nowrap">+3%</span>
+              <span id="descEspecialLabel" style="color:var(--text2);white-space:nowrap">+3% especial</span>
             </label>
-            <span id="descTotalBadge" style="display:none;font-size:10px;padding:1px 5px;border-radius:20px;background:var(--amber-light);color:var(--amber);font-weight:600"></span>
+            <span id="descTotalBadge" style="display:none;font-size:10px;padding:2px 6px;border-radius:20px;background:var(--amber-light);color:var(--amber);font-weight:600"></span>
           </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:10px;color:#C2410C;font-weight:600;width:90px">🔧 Serv. AYJ</span>
-            <input type="number" id="descAYJ" value="0" min="0" max="30" style="width:44px;padding:3px 5px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:inherit" oninput="calcTotales()">
-            <span style="font-size:10px;color:var(--text2)">%</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:10px;color:var(--text3);font-weight:600;width:90px">🔧 Serv. imos</span>
-            <span style="font-size:11px;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:var(--radius);border:1px solid var(--border)">0% fijo</span>
-          </div>
-          <div id="descCausalWrap" style="display:none;margin-top:2px;width:200px">
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">Gastos de terceros: precio fijo sin descuento</div>
+          <div id="descCausalWrap" style="display:none;margin-top:4px;width:220px">
             <select id="descEspecialCausal" onchange="actualizarDescBadge()" style="width:100%;font-size:11px;padding:3px 6px;border:1px solid #F59E0B;border-radius:var(--radius);background:#fffbf0;color:#854F0B;font-family:inherit">
-              <option value="">— Causal —</option>
-              <option>Compra de Combo</option>
+              <option value="">— Causal del descuento especial —</option>
+              <option>Contrato anual</option>
               <option>Pago 100% anticipado</option>
-              <option>Promo evento</option>
+              <option>Cliente VIP</option>
               <option>Aprobado Gerencia General</option>
               <option value="__custom__">✏️ Personalizado...</option>
             </select>
@@ -1872,6 +1870,8 @@ async function guardarCotizacion(){
   const fleteCOP=0;
   const ivaPct=19;
   if(!cliente){showToast('Ingresa el cliente','error');return;}
+  const idSynergyCheck=(document.getElementById('idSynergyInput')?.value||'').trim();
+  if(!idSynergyCheck){showToast('⚠ El número de Synergy es obligatorio','error');document.getElementById('idSynergyInput')?.focus();return;}
   if(!carrito.length){showToast('El carrito está vacío','error');return;}
   if(!listIdCotizaciones){showToast('Lista Cotizaciones no encontrada','error');return;}
   const subUSD=carrito.reduce((s,i)=>s+i.tarifa,0);
