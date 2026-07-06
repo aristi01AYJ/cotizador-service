@@ -1641,11 +1641,11 @@ function calcTotales(){
   const subAYJ=itemsAYJ.reduce((s,i)=>s+i.tarifa,0);
   const subImos=itemsImos.reduce((s,i)=>s+i.tarifa,0);
   const subUSD=subLic+subAYJ+subImos;
-  // Descuentos por grupo
-  const descLicUSD=subLic*desc/100;
-  const descAYJUSD=subAYJ*descAYJpct/100;
-  const descImosUSD=0; // siempre 0
-  const descUSD=descLicUSD+descAYJUSD+descImosUSD;
+  // Descuentos: solo sobre Servicios AYJ, Terceros precio fijo
+  const descLicUSD=0;
+  const descAYJUSD=subAYJ*desc/100;
+  const descImosUSD=0;
+  const descUSD=descAYJUSD;
   const baseUSD=subUSD-descUSD;
   const ivaUSD=baseUSD*ivaPct/100;
   const fleteUSD=0;
@@ -1653,12 +1653,9 @@ function calcTotales(){
   const totalCOP=Math.round(totalUSD*trm);
   document.getElementById('tSubUSD').textContent=fmtUSD(subUSD);
   document.getElementById('tSubCOP').textContent='';
-  // Mostrar descuentos diferenciados
-  const descLabel=[]
-  if(descLicUSD>0) descLabel.push('Lic: -'+fmtUSD(descLicUSD));
-  if(descAYJUSD>0) descLabel.push('AYJ: -'+fmtUSD(descAYJUSD));
-  document.getElementById('tDescUSD').textContent=descLabel.length?descLabel.join(' | '):'-'+fmtUSD(0);
-  document.getElementById('tDescCOP').textContent=descUSD>0?'-'+fmtCOP(descUSD):'';
+    // Mostrar descuento sobre Servicios AYJ
+  document.getElementById('tDescUSD').textContent=descUSD>0?'-'+fmtUSD(descUSD):fmtUSD(0);
+  document.getElementById('tDescCOP').textContent='';
   // Precio antes de IVA
   document.getElementById('tBaseIvaUSD').textContent=fmtUSD(baseUSD);
   document.getElementById('tBaseIvaCOP').textContent='';
@@ -2158,17 +2155,17 @@ function generarPDF(d, soloRetornar=false){
     +'</div>'
     +'</div>';
 
-  // Calcular descuentos por grupo para el PDF
-  const itemsLicPDF=d.items.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Software');
+  // Calcular descuentos para el PDF — SERVICE: solo sobre Servicios AYJ
+  const itemsLicPDF=[];
   const itemsAYJpdf=d.items.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Servicios AYJ');
-  const subLicPDF=itemsLicPDF.reduce((s,i)=>s+(i.tarifa||0),0);
+  const subLicPDF=0;
   const subAYJpdf=itemsAYJpdf.reduce((s,i)=>s+(i.tarifa||0),0);
-  const descLicPDF=subLicPDF*(d.desc||0)/100;
-  const descAYJpdf=subAYJpdf*(d.descAYJpct||0)/100;
+  const descLicPDF=0;
+  const descAYJpdf=subAYJpdf*(d.desc||0)/100;
 
-  const descRow=''
-    +((d.desc||0)>0?'<tr><td style="padding:5px 10px;color:#c0392b;border-bottom:1px solid #eee;">Desc. Licencias ('+(d.desc||0)+'%)'+(d.descEspecial?' <span style="font-size:9px;padding:1px 5px;border-radius:10px;background:#FAEEDA;color:#854F0B;">+3% especial</span>':'')+'</td><td style="padding:5px 10px;text-align:right;color:#c0392b;border-bottom:1px solid #eee;">-'+fUSD(descLicPDF)+'<br><span style="font-size:10px;">-'+fCOP(descLicPDF)+'</span></td></tr>':'')
-    +((d.descAYJpct||0)>0?'<tr><td style="padding:5px 10px;color:#C2410C;border-bottom:1px solid #eee;">Desc. Servicios AYJ ('+(d.descAYJpct||0)+'%)</td><td style="padding:5px 10px;text-align:right;color:#C2410C;border-bottom:1px solid #eee;">-'+fUSD(descAYJpdf)+'<br><span style="font-size:10px;">-'+fCOP(descAYJpdf)+'</span></td></tr>':'');
+  const descRow=(d.desc||0)>0
+    ?'<tr><td style="padding:5px 10px;color:#c0392b;border-bottom:1px solid #eee;">Desc. Servicios AYJ ('+(d.desc||0)+'%)'+(d.descEspecial?' <span style="font-size:9px;padding:1px 5px;border-radius:10px;background:#FAEEDA;color:#854F0B;">+3% especial</span>':'')+'</td><td style="padding:5px 10px;text-align:right;color:#c0392b;border-bottom:1px solid #eee;">-'+fUSD(descAYJpdf)+'</td></tr>'
+    :'';
 
   const fleteRow='';
 
