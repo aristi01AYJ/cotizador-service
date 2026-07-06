@@ -1057,9 +1057,8 @@ function calcLiqSW(){
 
   // Agrupar carrito
   const grupos={
-    'Software (Licencias)': carrito.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Software'),
     'Servicios AYJ':        carrito.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Servicios AYJ'),
-    'Servicios imos':       carrito.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Servicios imos'),
+    'Gastos de Terceros':   carrito.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Gastos de Terceros'),
   };
 
   const descLic=parseFloat(document.getElementById('descInput')?.value)||0;
@@ -1635,9 +1634,9 @@ function calcTotales(){
   const fleteCOP=0;
   const ivaPct=19;
   // Separar por grupo
-  const itemsLic=carrito.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Software');
+  const itemsLic=[];
   const itemsAYJ=carrito.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Servicios AYJ');
-  const itemsImos=carrito.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Servicios imos');
+  const itemsImos=carrito.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Gastos de Terceros');
   const subLic=itemsLic.reduce((s,i)=>s+i.tarifa,0);
   const subAYJ=itemsAYJ.reduce((s,i)=>s+i.tarifa,0);
   const subImos=itemsImos.reduce((s,i)=>s+i.tarifa,0);
@@ -2053,9 +2052,8 @@ function generarPDF(d, soloRetornar=false){
 
   // Agrupar items por tipo
   const grupos_pdf={
-    'Software': d.items.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Software'),
-    'Servicios imos': d.items.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Servicios imos'),
-    'Servicios AYJ': d.items.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Servicios AYJ'),
+    'Servicios AYJ':      d.items.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Servicios AYJ'),
+    'Gastos de Terceros': d.items.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Gastos de Terceros'),
   };
   const grupos_activos=Object.entries(grupos_pdf).filter(([,items])=>items.length>0);
   const tieneGrupos=grupos_activos.length>1;
@@ -2095,7 +2093,8 @@ function generarPDF(d, soloRetornar=false){
     grupos_activos.forEach(([grupo, items_g])=>{
       const subtotalGrupo=items_g.reduce((s,i)=>s+(i.tarifa||0),0);
       const descGrupo=(d.desc||0);
-      filas+=`<tr><td colspan="5" style="padding:8px 12px;background:#575756;color:#fff;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase">${grupo}</td></tr>`;
+      const grupoColor=grupo==='Gastos de Terceros'?'#92400E':'#E67E22';
+      filas+=`<tr><td colspan="5" style="padding:8px 12px;background:${grupoColor};color:#fff;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase">${grupo}</td></tr>`;
       filas+=buildFilasPDF(items_g, idx_acum);
       idx_acum+=items_g.length;
       if(grupos_activos.length>1){
