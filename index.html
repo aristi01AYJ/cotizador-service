@@ -2408,10 +2408,10 @@ let clientesData=[];
 let _listaFiltradaClientes=[];
 
 async function cargarClientes(forzar=false){
-  if(!siteId||!listIdClientes)return;
+  if(!siteIdComercial||!listIdClientes)return;
   if(clientesData.length>0&&!forzar){poblarDatalist();poblarCiudades();renderTablaClientes();return;}
   try{
-    const todos=await graphGetAll(`/sites/${siteId}/lists/${listIdClientes}/items?expand=fields&$select=fields&$top=500`);
+    const todos=await graphGetAll(`/sites/${siteIdComercial}/lists/${listIdClientes}/items?expand=fields&$select=fields&$top=500`);
     clientesData=todos.map(i=>{
       const f=i.fields;
       return{
@@ -2671,7 +2671,7 @@ async function eliminarClienteIdx(idx){
   if(!confirm(`¿Eliminar cliente "${c.titulo}"? Esta acción no se puede deshacer.`)) return;
   try{
     const token=await getToken();
-    await fetch(`https://graph.microsoft.com/v1.0/sites/${siteId}/lists/${listIdClientes}/items/${c.id}`,
+    await fetch(`https://graph.microsoft.com/v1.0/sites/${siteIdComercial}/lists/${listIdClientes}/items/${c.id}`,
       {method:'DELETE',headers:{Authorization:'Bearer '+token}});
     clientesData=clientesData.filter(x=>x.id!==c.id);
     renderTablaClientes();
@@ -2765,12 +2765,12 @@ async function guardarCliente(){
   try{
     const token=await getToken();
     if(clienteEditandoId){
-      await fetch(`https://graph.microsoft.com/v1.0/sites/${siteId}/lists/${listIdClientes}/items/${clienteEditandoId}/fields`,{
+      await fetch(`https://graph.microsoft.com/v1.0/sites/${siteIdComercial}/lists/${listIdClientes}/items/${clienteEditandoId}/fields`,{
         method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(fields)
       });
       showToast('✓ Cliente actualizado','success');
     } else {
-      await graphPost(`/sites/${siteId}/lists/${listIdClientes}/items`,{fields});
+      await graphPost(`/sites/${siteIdComercial}/lists/${listIdClientes}/items`,{fields});
       // Guardar contactos en lista Contactos
       if(contactos.length>0){
         await cargarListaContactos();
