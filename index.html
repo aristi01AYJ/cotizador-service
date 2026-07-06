@@ -205,7 +205,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
   .totales{margin-left:0;width:100%;gap:6px;flex-wrap:wrap;justify-content:flex-end}
   .total-val.big{font-size:14px}
   #historialView{height:100%;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding:10px}
-  #clientesView{height:100%;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding:10px}
+  #clientesView{height:100%;overflow:hidden}
   .hist-table th:nth-child(2),.hist-table td:nth-child(2),
   .hist-table th:nth-child(4),.hist-table td:nth-child(4){display:none}
   .cli-table th:nth-child(3),.cli-table td:nth-child(3),
@@ -654,63 +654,86 @@ body.modo-cop .items-table th:nth-child(4),body.modo-cop .items-table td:nth-chi
 
 <!-- MODAL NUEVO CLIENTE -->
 <div id="modalCliente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:var(--radius-lg);padding:28px 32px;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+  <div style="background:#fff;border-radius:var(--radius-lg);padding:28px 32px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <strong style="font-size:15px" id="modalClienteTitulo">Nuevo Cliente</strong>
       <button onclick="cerrarModalCliente()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3)">×</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="field-group" style="grid-column:1/-1">
-        <label>Razón Social *</label>
-        <input type="text" id="mc_titulo" placeholder="Nombre de la empresa..." style="width:100%">
-      </div>
-      <div class="field-group">
-        <label>Contacto (Nombre)</label>
-        <input type="text" id="mc_nombre" placeholder="Nombre del contacto...">
-      </div>
-      <div class="field-group">
-        <label>Email</label>
-        <input type="email" id="mc_email" placeholder="correo@empresa.com">
-      </div>
-      <div class="field-group">
-        <label>Teléfono</label>
-        <input type="text" id="mc_telefono" placeholder="3001234567">
-      </div>
-      <div class="field-group">
-        <label>Ciudad</label>
-        <input type="text" id="mc_ciudad" placeholder="Selecciona o escribe una ciudad..." list="ciudadesList" autocomplete="off">
-        <datalist id="ciudadesList">
-          <option value="Bogotá"><option value="Medellín"><option value="Cali">
-          <option value="Barranquilla"><option value="Bucaramanga"><option value="Pereira">
-          <option value="Manizales"><option value="Cúcuta"><option value="Ibagué">
-          <option value="Cartagena"><option value="Armenia"><option value="Pasto">
-          <option value="Villavicencio"><option value="Montería"><option value="Sincelejo">
-          <option value="Valledupar"><option value="Santa Marta"><option value="Neiva">
-          <option value="Popayán"><option value="Tunja"><option value="Palmira">
-          <option value="Bello"><option value="Itagüí"><option value="Envigado">
-          <option value="Rionegro"><option value="Dosquebradas">
-          <option value="Quito"><option value="Lima"><option value="Ciudad de Panamá">
-          <option value="Caracas">
-        </datalist>
-      </div>
-      <div class="field-group">
-        <label>País</label>
-        <input type="text" id="mc_pais" value="Colombia">
-      </div>
-      <div class="field-group" style="grid-column:1/-1">
-        <label>NIT / RUT</label>
-        <input type="text" id="mc_nit" placeholder="860.079.605-6">
+
+    <!-- SECCIÓN 1: Datos de la empresa -->
+    <div style="background:#f5f7f0;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:#575756;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">🏢 Datos de la Empresa</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field-group" style="grid-column:1/-1;margin:0">
+          <label>Razón Social *</label>
+          <input type="text" id="mc_titulo" placeholder="Nombre de la empresa..." style="width:100%">
+        </div>
+        <div class="field-group" style="margin:0">
+          <label>Ciudad</label>
+          <input type="text" id="mc_ciudad" placeholder="Ciudad..." list="ciudadesList" autocomplete="off">
+          <datalist id="ciudadesList">
+            <option value="Bogotá"><option value="Medellín"><option value="Cali">
+            <option value="Barranquilla"><option value="Bucaramanga"><option value="Pereira">
+            <option value="Manizales"><option value="Cúcuta"><option value="Ibagué">
+            <option value="Cartagena"><option value="Armenia"><option value="Pasto">
+            <option value="Villavicencio"><option value="Montería"><option value="Santa Marta">
+            <option value="Quito"><option value="Lima"><option value="Ciudad de Panamá">
+          </datalist>
+        </div>
+        <div class="field-group" style="margin:0">
+          <label>País</label>
+          <input type="text" id="mc_pais" value="Colombia">
+        </div>
+        <div class="field-group" style="grid-column:1/-1;margin:0">
+          <label>NIT / RUT</label>
+          <input type="text" id="mc_nit" placeholder="860.079.605-6">
+        </div>
       </div>
     </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+
+    <!-- SECCIÓN 2: Contactos -->
+    <div style="background:#EFF6FF;border-radius:var(--radius);padding:12px 14px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#1E3A8A;text-transform:uppercase;letter-spacing:0.5px">👤 Contactos</div>
+        <button onclick="mcAgregarContacto()" style="background:#1E3A8A;color:#fff;border:none;border-radius:var(--radius);padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit">+ Agregar contacto</button>
+      </div>
+      <div id="mcContactosWrap">
+        <!-- El primer contacto se agrega dinámicamente -->
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn-sec" onclick="cerrarModalCliente()">Cancelar</button>
-      <button class="btn-primary" id="btnGuardarCliente" onclick="guardarCliente()"><i class="ti ti-check"></i> Guardar Cliente</button>
+      <button class="btn-primary" id="btnGuardarCliente" onclick="guardarCliente()"><i class="ti ti-check"></i> Guardar</button>
     </div>
   </div>
 </div>
 
 
 
+<!-- MODAL NUEVO CONTACTO -->
+<div id="modalNuevoContacto" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:600;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:var(--radius-lg);padding:24px 28px;width:440px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <strong style="font-size:14px">Nuevo Contacto</strong>
+      <button onclick="document.getElementById('modalNuevoContacto').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3)">×</button>
+    </div>
+    <div style="background:#EFF6FF;border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;font-size:12px;color:#1E3A8A">
+      🏢 Cliente: <strong id="modalContactoClienteNombre"></strong>
+    </div>
+    <input type="hidden" id="modalContactoClienteIdx">
+    <div style="display:grid;gap:10px">
+      <div class="field-group" style="margin:0"><label>Nombre *</label><input type="text" id="mc_cont_nombre_new" placeholder="Nombre completo..." style="width:100%"></div>
+      <div class="field-group" style="margin:0"><label>Cargo</label><input type="text" id="mc_cont_cargo_new" placeholder="Gerente, Jefe de Compras..."></div>
+      <div class="field-group" style="margin:0"><label>Email</label><input type="email" id="mc_cont_email_new" placeholder="correo@empresa.com" style="width:100%"></div>
+      <div class="field-group" style="margin:0"><label>Teléfono</label><input type="text" id="mc_cont_tel_new" placeholder="300 123 4567"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+      <button class="btn-sec" onclick="document.getElementById('modalNuevoContacto').style.display='none'">Cancelar</button>
+      <button class="btn-primary" onclick="guardarNuevoContactoModal()"><i class="ti ti-check"></i> Guardar Contacto</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2540,24 +2563,62 @@ async function cargarContactosPorCliente(nombreCliente){
 }
 
 function abrirModalNuevoContacto(nombreCliente, clienteIdx){
-  const nombre=prompt('Nombre del contacto:');
-  if(!nombre?.trim()) return;
-  const cargo=prompt('Cargo (opcional):')||'';
-  const email=prompt('Email (opcional):')||'';
-  const telefono=prompt('Teléfono (opcional):')||'';
-  _guardarNuevoContacto(nombreCliente, {nombre:nombre.trim(),cargo,email,telefono}, clienteIdx);
+  // Abrir modal de contacto con cliente pre-llenado
+  document.getElementById('modalContactoClienteNombre').textContent = nombreCliente;
+  document.getElementById('modalContactoClienteIdx').value = clienteIdx;
+  document.getElementById('mc_cont_nombre_new').value = '';
+  document.getElementById('mc_cont_cargo_new').value = '';
+  document.getElementById('mc_cont_email_new').value = '';
+  document.getElementById('mc_cont_tel_new').value = '';
+  document.getElementById('modalNuevoContacto').style.display = 'flex';
+  setTimeout(()=>document.getElementById('mc_cont_nombre_new')?.focus(),100);
 }
 
+
+async function guardarNuevoContactoModal(){
+  const nombre=document.getElementById('mc_cont_nombre_new')?.value.trim();
+  if(!nombre){showToast('El nombre es obligatorio','error');return;}
+  const nombreCliente=document.getElementById('modalContactoClienteNombre')?.textContent||'';
+  const clienteIdx=parseInt(document.getElementById('modalContactoClienteIdx')?.value||'-1');
+  const datos={
+    nombre,
+    cargo:document.getElementById('mc_cont_cargo_new')?.value.trim()||'',
+    email:document.getElementById('mc_cont_email_new')?.value.trim()||'',
+    telefono:document.getElementById('mc_cont_tel_new')?.value.trim()||'',
+  };
+  document.getElementById('modalNuevoContacto').style.display='none';
+  await _guardarNuevoContacto(nombreCliente, datos, clienteIdx);
+}
 async function _guardarNuevoContacto(nombreCliente, datos, clienteIdx){
   await cargarListaContactos();
-  if(!listIdContactos){showToast('Lista Contactos no encontrada','error');return;}
+  console.log('[AYJ] Guardando contacto para:', nombreCliente, 'lista:', listIdContactos);
+  if(!listIdContactos){showToast('Lista Contactos no encontrada — recarga la página','error');return;}
   try{
     const token=await getToken();
-    await fetch(`https://graph.microsoft.com/v1.0/sites/${siteIdComercial}/lists/${listIdContactos}/items`,{
+    // Primero consultar el nombre interno del campo Cliente
+    // Campo Cliente es Lookup — necesita el ID del item en lista Clientes
+    let clienteLookupId=null;
+    try{
+      const clientesResp=await fetch(
+        `https://graph.microsoft.com/v1.0/sites/${siteIdComercial}/lists/${listIdClientes}/items?expand=fields($select=Title,id)&$top=500`,
+        {headers:{Authorization:'Bearer '+token}}).then(r=>r.json());
+      const clienteItem=clientesResp.value?.find(i=>(i.fields?.Title||'').trim().toLowerCase()===nombreCliente.trim().toLowerCase());
+      if(clienteItem) clienteLookupId=parseInt(clienteItem.id);
+      console.log('[AYJ] ClienteLookupId:', clienteLookupId, 'para:', nombreCliente);
+    }catch(e){console.warn('No se pudo obtener ID cliente:',e.message);}
+
+    const fields={Title:datos.nombre,Cargo:datos.cargo,Email:datos.email,Telefono:datos.telefono,Activo:true};
+    if(clienteLookupId) fields.ClienteLookupId=clienteLookupId;
+
+    const resp=await fetch(`https://graph.microsoft.com/v1.0/sites/${siteIdComercial}/lists/${listIdContactos}/items`,{
       method:'POST',
       headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
-      body:JSON.stringify({fields:{Title:datos.nombre,Cliente:nombreCliente,Cargo:datos.cargo,Email:datos.email,Telefono:datos.telefono,Activo:true}})
+      body:JSON.stringify({fields})
     });
+    const respData=await resp.json();
+    if(!resp.ok) throw new Error(respData?.error?.message||'Error '+resp.status);
+    console.log('[AYJ] Contacto guardado ID:', respData.id);
+    if(!resp.ok) throw new Error(respData?.error?.message||'Error '+resp.status);
     showToast('✓ Contacto agregado','success');
     seleccionarClienteDetalle(clienteIdx);
   }catch(e){showToast('Error: '+e.message,'error');}
