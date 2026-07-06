@@ -3077,7 +3077,6 @@ function usarCliente(titulo,nombre,ciudad,telefono){
   showToast('Cliente cargado: '+titulo,'success');
 }
 
-let clienteEditandoId=null;
 function abrirModalCliente(){
   clienteEditandoId=null;
   ['mc_titulo','mc_nombre','mc_email','mc_telefono','mc_ciudad','mc_nit'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
