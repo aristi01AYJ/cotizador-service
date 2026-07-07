@@ -1017,7 +1017,17 @@ const VENDEDORES={
   'Pulido':  {email:'j.pulido@ayj.com.co',   tel:'+57 312 449 5272'},
   'Wilson':  {email:'w.valencia@ayj.com.co', tel:'+57 310 309 4136'},
   'Arnulfo': {email:'a.villadiego@ayj.com.co',tel:'+57 322 352 0383'},
+  'Ernesto': {email:'ernesto@ayj.com.co',    tel:'+57 313 252 7737'},
+  'Caraballo':{email:'ernesto@ayj.com.co',   tel:'+57 313 252 7737'},
 };
+
+function vendedorFolderName(nombre){
+  const n=(nombre||'').toLowerCase();
+  if(n.includes('pulido')) return 'JorgeP';
+  if(n.includes('salamanca')) return 'JorgeS';
+  if(n.includes('caraballo')||n.includes('ernesto')) return 'Ernesto';
+  return nombre.split(' ')[0]||'AYJ';
+}
 
 function getVendedorInfo(nombre){
   if(!nombre) return {email:'',tel:''};
@@ -4709,7 +4719,7 @@ async function guardarHTMLEnSharePoint(numOferta, htmlContent, cliente='', idSyn
     const token=await getToken();
     const vendedor=(document.getElementById('vendedorSel')?.value||currentUserName||'AYJ').split(' ')[0];
     const anio=new Date().getFullYear();
-    const folderPath=`Documentos compartidos/Cotizaciones_SERVICE/${vendedor}/${anio}`;
+    const folderPath=`Documentos compartidos/Cotizaciones_SERVICE/${vendedorFolderName(vendedor)}/${anio}`;
 
     // Crear carpeta si no existe (PUT con @microsoft.graph.conflictBehavior=replace)
     await fetch(
