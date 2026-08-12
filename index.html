@@ -3107,6 +3107,8 @@ function editarCliente(c){
 function cerrarModalCliente(){document.getElementById('modalCliente').style.display='none';}
 
 async function guardarCliente(){
+  // Asegurar que siteIdComercial esté inicializado
+  if(!siteIdComercial) await cargarListaContactos();
   const titulo=document.getElementById('mc_titulo').value.trim();
   if(!titulo){showToast('La razón social es obligatoria','error');return;}
   if(!listIdClientes){showToast('Lista Clientes no encontrada','error');return;}
@@ -4783,6 +4785,12 @@ function mcAgregarContacto(datos={}){
     ${idx>0?`<button onclick="document.getElementById('mcContacto_${idx}').remove()" style="position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;color:#888;font-size:14px">×</button>`:''}
   `;
   wrap.appendChild(div);
+}
+
+function actualizarNumOferta(){
+  const input=document.getElementById('ofertaNumInput');
+  const badge=document.getElementById('ofertaNum');
+  if(input&&badge&&input.value.trim()) badge.textContent=input.value.trim();
 }
 
 initMsal();
