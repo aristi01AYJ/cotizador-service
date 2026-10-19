@@ -259,6 +259,7 @@ body.modo-cop .items-table th:nth-child(4),body.modo-cop .items-table td:nth-chi
     </div>
     <div class="topbar-right">
       <span class="user-chip" id="userChip">—</span>
+      <button class="btn-logout" onclick="rdAbrir()" title="Respaldo de datos del sitio Tecs (pide clave)"><i class="ti ti-database-export"></i> Respaldo</button>
       <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout"></i></button>
     </div>
   </div>
@@ -1255,9 +1256,21 @@ async function getToken(){
   try{const r=await msalInstance.acquireTokenSilent({...loginRequest,account:accounts[0]});return r.accessToken;}
   catch(e){await msalInstance.acquireTokenRedirect(loginRequest);return null;}
 }
+// Lecturas a Graph con reintento: si Microsoft limita las peticiones (429) o está saturado (503/504) se espera lo que indique Retry-After (máx. 30 s) y se vuelve a intentar, hasta 5 veces.
+async function graphFetchReintento(url,opts){
+  for(let n=0;;n++){
+    const r=await fetch(url,opts);
+    if((r.status===429||r.status===503||r.status===504)&&n<5){
+      const seg=parseInt(r.headers.get('Retry-After'));
+      await new Promise(x=>setTimeout(x,Math.min(seg>0?seg:Math.pow(2,n),30)*1000));
+      continue;
+    }
+    return r;
+  }
+}
 async function graphGet(url){
   const token=await getToken();
-  const r=await fetch('https://graph.microsoft.com/v1.0'+url,{headers:{Authorization:'Bearer '+token}});
+  const r=await graphFetchReintento('https://graph.microsoft.com/v1.0'+url,{headers:{Authorization:'Bearer '+token}});
   if(!r.ok)throw new Error('Graph '+r.status);
   return r.json();
 }
@@ -1271,13 +1284,63 @@ async function graphGetAll(url){
   let results=[],nextUrl='https://graph.microsoft.com/v1.0'+url;
   while(nextUrl){
     const token=await getToken();
-    const r=await fetch(nextUrl,{headers:{Authorization:'Bearer '+token}});
+    const r=await graphFetchReintento(nextUrl,{headers:{Authorization:'Bearer '+token}});
     if(!r.ok)throw new Error('Graph '+r.status);
     const data=await r.json();
     results=results.concat(data.value||[]);
     nextUrl=data['@odata.nextLink']||null;
   }
   return results;
+}
+
+// ── RESPALDO DE DATOS (sitio Tecs) ───────────────────────────────────────────────────────────────────────────
+// Botón «Respaldo» (arriba, junto a cerrar sesión; pide la clave del módulo MG): descarga en un archivo JSON TODAS las listas del sitio Tecs de SharePoint (servicios, cotizaciones SVC,
+// clientes de servicio, etc.) con sus filas completas y los nombres de columnas. Mismo formato que el respaldo de los cotizadores de Máquinas (V1/V2), que cubre el sitio Comercial.
+// El archivo trae datos de clientes y costos: guardarlo en un sitio protegido, no enviarlo por correo ni chat. Las lecturas reintentan solas si Microsoft limita las peticiones (429).
+const RD={corriendo:false,desbloqueado:false};
+const rdEsc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rdUltimo(){ try{ const v=localStorage.getItem('ayj_ultimo_respaldo_tecs'); return v?new Date(v):null; }catch(e){ return null; } }
+function rdAbrir(){
+  if(!siteId){ showToast('Aún no hay conexión con SharePoint','error'); return; }
+  if(!RD.desbloqueado){
+    const clave=prompt('Clave para el respaldo de datos:'); if(clave===null) return;
+    if(clave!==CLAVE_MG){ showToast('Clave incorrecta','error'); return; }
+    RD.desbloqueado=true;
+  }
+  const u=rdUltimo(), m=document.createElement('div'); m.id='rdModal'; m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:590;display:flex;align-items:center;justify-content:center;padding:12px';
+  m.innerHTML='<div style="background:#fff;border-radius:var(--radius-lg);width:560px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><strong style="font-size:15px">🛟 Respaldo de datos · Servicios</strong><button onclick="document.getElementById(\'rdModal\').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3)">×</button></div>'
+    +'<div style="padding:14px 18px;overflow-y:auto;font-size:13px"><p style="margin:0 0 8px">Descarga una copia de <b>todas las listas</b> del sitio de SharePoint «'+rdEsc(SP_SITE)+'» (servicios, cotizaciones, liquidaciones…) en un solo archivo.</p>'
+    +'<p style="margin:0 0 8px;color:var(--text2);font-size:12px">'+(u?'Último respaldo hecho desde este navegador: <b>'+u.toLocaleString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</b>.':'Todavía no se ha hecho ningún respaldo desde este navegador.')+' Recomendado: una vez por semana.</p>'
+    +'<div style="background:#FEF3C7;border:1px solid #F59E0B;color:#92400E;border-radius:var(--radius);padding:8px 10px;font-size:12px;margin-bottom:10px">El archivo contiene datos de clientes y costos. Guárdalo en una carpeta protegida de la empresa; no lo envíes por correo ni por chat.</div>'
+    +'<div id="rdProg" style="font-size:12px;color:var(--text2);max-height:220px;overflow-y:auto"></div></div>'
+    +'<div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end"><button class="btn-sec" onclick="document.getElementById(\'rdModal\').remove()">Cerrar</button><button class="btn-primary" id="rdGo" onclick="rdGenerar()">Generar respaldo ahora</button></div></div>';
+  document.body.appendChild(m);
+}
+async function rdGenerar(){
+  if(RD.corriendo) return; RD.corriendo=true;
+  const go=document.getElementById('rdGo'), prog=document.getElementById('rdProg'); if(go){ go.disabled=true; go.textContent='Respaldando…'; }
+  const linea=t=>{ if(prog){ prog.innerHTML+='<div>'+t+'</div>'; prog.scrollTop=prog.scrollHeight; } };
+  const out={app:'Cotizador AYJ · Servicios',generado:new Date().toISOString(),por:currentUserName||'',sitio:SP_SITE,listas:[]}, fallos=[]; let filas=0;
+  try{
+    const todas=((await graphGet('/sites/'+siteId+'/lists?$select=id,displayName,list&$top=200')).value||[]).filter(l=>l.list&&!l.list.hidden&&l.list.template==='genericList');
+    linea('Se respaldarán '+todas.length+' listas…');
+    for(const l of todas){
+      try{
+        const cols=((await graphGet('/sites/'+siteId+'/lists/'+l.id+'/columns?$top=300&$select=name,displayName')).value||[]).map(c=>({nombre:c.name,visible:c.displayName}));
+        const its=await graphGetAll('/sites/'+siteId+'/lists/'+l.id+'/items?expand=fields&$top=500');
+        out.listas.push({nombre:l.displayName,columnas:cols,filas:its.map(i=>({id:i.id,creado:i.createdDateTime,modificado:i.lastModifiedDateTime,creadoPor:(i.createdBy&&i.createdBy.user&&i.createdBy.user.displayName)||'',modificadoPor:(i.lastModifiedBy&&i.lastModifiedBy.user&&i.lastModifiedBy.user.displayName)||'',campos:i.fields||{}}))});
+        filas+=its.length; linea('✓ '+rdEsc(l.displayName)+' · '+its.length+' filas');
+      }catch(e){ fallos.push(l.displayName+': '+e.message); linea('<span style="color:#B91C1C">✗ '+rdEsc(l.displayName)+': '+rdEsc(e.message)+'</span>'); }
+    }
+    out.resumen={listas:out.listas.length,filas,fallos};
+    const blob=new Blob([JSON.stringify(out)],{type:'application/json'}), mb=(blob.size/1048576).toFixed(1), nombre='ayj-respaldo-tecs-'+new Date().toISOString().slice(0,10)+'.json';
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+    if(!fallos.length){ try{ localStorage.setItem('ayj_ultimo_respaldo_tecs',new Date().toISOString()); }catch(e){} }
+    linea('<b>'+(fallos.length?'⚠ Respaldo incompleto':'✓ Respaldo listo')+'</b>: '+out.listas.length+' listas, '+filas.toLocaleString('es-CO')+' filas, '+mb+' MB → <b>'+nombre+'</b> (revisa tu carpeta de descargas).');
+    console.log('[AYJ] Respaldo Tecs:',out.listas.length,'listas,',filas,'filas,',mb,'MB, fallos:',fallos.length);
+    showToast(fallos.length?'⚠ Respaldo con '+fallos.length+' lista(s) que fallaron':'✓ Respaldo descargado ('+filas.toLocaleString('es-CO')+' filas)',fallos.length?'error':'success');
+  }catch(e){ linea('<span style="color:#B91C1C">No se pudo completar: '+rdEsc(e.message)+'</span>'); showToast('No se pudo hacer el respaldo: '+e.message,'error'); }
+  RD.corriendo=false; if(go){ go.disabled=false; go.textContent='Generar de nuevo'; }
 }
 
 async function showApp(account){
