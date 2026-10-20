@@ -1701,28 +1701,25 @@ function cambiarCantCarrito(idx, delta){
 
 function removerItem(i){carrito.splice(i,1);renderCarrito();calcTotales();renderCatalogo();}
 
-function calcTotales(){
+// Única fuente de verdad de los totales (pantalla, guardado y PDF): primero el descuento (solo Servicios AYJ), luego el IVA sobre lo que queda
+function calcularOferta(){
   const desc=getDescuento();
-  const descAYJpct=parseFloat(document.getElementById('descAYJ')?.value)||0;
-  const fleteCOP=0;
   const ivaPct=19;
-  // Separar por grupo
-  const itemsLic=[];
   const itemsAYJ=carrito.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Servicios AYJ');
   const itemsImos=carrito.filter(i=>getGrupoItem(i.tipologia,i.marca)==='Gastos de Terceros');
-  const subLic=itemsLic.reduce((s,i)=>s+i.tarifa,0);
   const subAYJ=itemsAYJ.reduce((s,i)=>s+i.tarifa,0);
   const subImos=itemsImos.reduce((s,i)=>s+i.tarifa,0);
-  const subUSD=subLic+subAYJ+subImos;
+  const subUSD=subAYJ+subImos;
   // Descuentos: solo sobre Servicios AYJ, Terceros precio fijo
-  const descLicUSD=0;
   const descAYJUSD=subAYJ*desc/100;
-  const descImosUSD=0;
   const descUSD=descAYJUSD;
   const baseUSD=subUSD-descUSD;
   const ivaUSD=baseUSD*ivaPct/100;
-  const fleteUSD=0;
   const totalUSD=baseUSD+ivaUSD;
+  return {desc,ivaPct,subUSD,descAYJUSD,descUSD,baseUSD,ivaUSD,totalUSD};
+}
+function calcTotales(){
+  const {desc,subUSD,descAYJUSD,descUSD,baseUSD,ivaUSD,totalUSD}=calcularOferta();
   const totalCOP=Math.round(totalUSD*trm);
   document.getElementById('tSubUSD').textContent=fmtUSD(subUSD);
   document.getElementById('tSubCOP').textContent='';
@@ -2034,10 +2031,7 @@ async function guardarCotizacion(){
   if(!idSynergyCheck){showToast('⚠ El número de Synergy es obligatorio','error');document.getElementById('idSynergyInput')?.focus();return;}
   if(!carrito.length){showToast('El carrito está vacío','error');return;}
   if(!listIdCotizaciones){showToast('Lista Cotizaciones no encontrada','error');return;}
-  const subUSD=carrito.reduce((s,i)=>s+i.tarifa,0);
-  const descUSD=subUSD*desc/100;
-  const baseUSD=subUSD-descUSD;
-  const ivaUSD=baseUSD*ivaPct/100;
+  const {subUSD,descUSD,baseUSD,ivaUSD}=calcularOferta();
   const fleteUSD=trm>0?fleteCOP/trm:0;
   const totalUSD=baseUSD+ivaUSD+fleteUSD;
   const totalCOP=Math.round(totalUSD*trm);
